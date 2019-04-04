@@ -27,10 +27,10 @@ def synthesize(n,d,noise_variance):
         #assign y labels
         y=np.random.normal(math.sin(np.linalg.norm(X[i])*6*math.pi), sigma)
         if y>0: y=1
-        else:   y=-1
+        else:   y=0
         Y[i]=y
 
-    cdict = {1: 'yellow', -1: 'brown'}
+    cdict = {1: 'yellow', 0: 'brown'}
 
     #For 3D plot (dont forget to set d=3)
     if d==3:
@@ -38,7 +38,7 @@ def synthesize(n,d,noise_variance):
         ax = fig.add_subplot(111, projection='3d')
         for g in np.unique(Y):
             ix = np.where(Y == g)
-            ax.scatter(X[ix,0],X[ix,1],X[ix,2],s=2,c=cdict[g],label='y= '+str(g))
+            ax.scatter(X[ix,0],X[ix,1],X[ix,2],s=2,c=cdict[g],label='y= '+str(int(g)))
         plt.title(r'$y=sgn(sin(6\pi||\bar{x}||))$ with Gaussian Noise ($\sigma^2$='+str(noise_variance)+')')
         plt.xlabel('$x_1$')
         plt.ylabel('$x_2$')
