@@ -3,11 +3,15 @@
 # Measuring Generalization Impact of Depth and Width on Over-Parameterized Neural Networks maintaining VC Dimension
 
 ## Abstract
-Randomly initialized first-order methods achieve zero training loss despite having a non-convex and non-smooth objective function. One explanation of this phenomena is that the neural network is over-parameterized, with previous instances using 100x parameters than the number of training data. Extending this architectural approach, one theory speculates that over-parametrization of a Neural Network relative to the data set enables the network to fit all training data, though this does not guarantee zero testing loss. In this paper, we investigate the trade-offs between depth and width on test data loss when controlling for network capacity (VC dimension).
+One theory that explains how randomly initialized first-order methods achieve zero training loss despite having a non-convex and non-smooth objective function is Neural Network Overparameterization. However, previous work attempting to substantiate this theory require extreme overparameterization -- with parameter count exceeding training data size by an exponential factor. Additionally, the impact to convergence rate and generalizability of these overparameterized networks are not well explored, especially when varying depth and width while controlling for network capacity. In this paper, we investigate the trade-offs between network depth and width on convergence rate and test data loss when controlling for network capacity (reflected through VC-dimension bounds).
+First, we generate a synthetic data set, $S_1$, imposing strong assumptions, to train a two-layer neural network with ReLU activation and sigmoidal output. This trained neural network witho zero training loss is then used as our control, from which we derive the VC-Dimension bounds. Second, we propose three variants on the network architecture and prove that these alternative models maintain the same VC-Dimension bounds as our control, analyzing convergence rate and generalization of these variants as compared to our control. Third, we repeat the above process on a noisier and larger data set, $S_2$, deriving a new control network and repeating the process above, to analyze convergence rate and generalization of this second set of variant models with similar VC-Dimension bounds.
 
 ## 1. Introduction
 
-A. Success of Randomly Initialized Gradient Descent
+### A. Zero Training Loss in Over-Parameterized Neural Networks
+Overparameterization has emerged as the prevalent theory justifying the perfect training performance seen from randomly initialized first-order methods. Prior work makes assumptions on the degree of overparameterization relative to the size of the data set, $n$, and fairly stringent assumptions about the data set itself. While these are theoretically reasonable, these assumptions are challenging to scale with $n$ and their impact on the perfect training performance seen by these networks is not well-explored experimentally.
+
+Furthermore, experimental insights on how depth and width of the network impact the convergence rate and network generalization is limited, especially when network capacity remains constant. Network capacity in this context is reflected through the Vapnik-Chervonenkis Dimension (VC-Dimension) of network $\scriptN$, defined as the maximum size of set $\scriptS \in X$ that is shattered by $N$.
 
 B. Overparameterization
 
