@@ -71,4 +71,6 @@ def synthesize(n,d,noise_variance):
     plt.ylabel('$x_2$')
     plt.show()
 
+    return X, Y
+
 synthesize(n=10000,d=2,noise_variance=5)
