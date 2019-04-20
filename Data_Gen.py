@@ -33,7 +33,7 @@ def synthesize(n,d,noise_variance):
 
     cdict = {1: 'yellow', 0: 'brown'}
 
-    #For 3D plot (dont forget to set d=3)
+    # For 3D plot (dont forget to set d=3)
     if d==3:
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
@@ -47,7 +47,7 @@ def synthesize(n,d,noise_variance):
         plt.legend()
         plt.show()
 
-    # #For 2D plot
+    # For 2D plot
     # if d==2:
     #     fig, ax = plt.subplots()
     #     for g in np.unique(Y):
@@ -61,15 +61,16 @@ def synthesize(n,d,noise_variance):
     #
     # return X, Y
 
-    fig, ax = plt.subplots()
-    cm = plt.cm.get_cmap('RdYlBu')
-    sc = ax.scatter(X[:, 0], X[:, 1], s=2, c=Y, cmap=cm)
-    clb = plt.colorbar(sc)
+    # Visualize Data
+    # fig, ax = plt.subplots()
+    # cm = plt.cm.get_cmap('RdYlBu')
+    # sc = ax.scatter(X[:, 0], X[:, 1], s=2, c=Y, cmap=cm)
+    # clb = plt.colorbar(sc)
 
-    clb.set_label('y',rotation=0)
-    plt.xlabel('$x_1$')
-    plt.ylabel('$x_2$')
-    plt.show()
+    # clb.set_label('y',rotation=0)
+    # plt.xlabel('$x_1$')
+    # plt.ylabel('$x_2$')
+    # plt.show()
 
     return X, Y
 
