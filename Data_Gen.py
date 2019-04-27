@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import math
-import random
+import math, random
 from mpl_toolkits.mplot3d import Axes3D
+
 def synthesize(n,d,noise_variance):
     """
     generate random vectors with d components selected from uniform distribution between -1 and 1
