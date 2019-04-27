@@ -41,4 +41,3 @@ Once we define this control neural network architecture and it’s accompanying 
 [1]  S.  Du,  X.  Zhai,  B.  Poczos  and  A.  Singh,  ”Gradient  Descent  Provably Optimizes Over-Parameterized Neural Networks”, Conference Paper at International  Conference  on  Learning  Representations  2019,  February 2019.
 [2]  P.  Bartlett,  N.  Harvey,  C.  Liaw,  and  A.  Mehrabian,  ”Nearly-tight  VC-dimension  and  pseudodimension  bounds  for  piecewise  Linear  NNs”, Conference  Paper  at  Conference  on  Learning  Theory  2017,  October 2017.
 [3] 
-
