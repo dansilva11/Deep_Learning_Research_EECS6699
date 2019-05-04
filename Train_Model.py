@@ -35,25 +35,28 @@ def main():
     x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0)
 
     # Define target depths
-    depths = [2]
+    depths = [3]
 
     # Setup Weight Counts: # Hidden nodes (m) =
     #	(1) 5x # Samples
     #	(2) 10 x # Samples (n)
     #	(3) (# Samples (n))^2 (Source: [2])
-    param_counts = [.5*n,.6*n,.7*n,.8*n,.9*n,n]
+    param_counts = [.1 * n, .25 * n, .5 * n, n, 10 * n, 100 * n]
 
     # Setup plot/counter
     fig = plt.figure()
     x = 1
 
+    # Calculate VC-Dim for each weight count for a 2 layer network these input VC dimensions will be held constant
+    # as L is increased
+    VCdims = []
+    for W in param_counts:
+        VCdims.append(W * 2 * math.log(W))
+
     # Create convergence rate graph
     loss_histories = list()
     for L in depths:
-        # Calculate VC-Dim for each weight count
-        VCdims=[]
-        for W in param_counts:
-            VCdims.append(W*L*math.log(W))
+
 
         for i in range(0,len(VCdims)):
             VC = VCdims[i]
