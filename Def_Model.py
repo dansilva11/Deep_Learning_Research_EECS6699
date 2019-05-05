@@ -85,7 +85,7 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs,W):
     model = compModel(d, hidden_nodes, L)
 
     # Train Model
-    loss_history = model.fit(x_train, y_train, epochs=epochs)
+    loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
 
 
     # Setup Graphs
