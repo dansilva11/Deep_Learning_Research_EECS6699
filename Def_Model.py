@@ -6,6 +6,7 @@ from keras import Sequential
 from keras.layers import Dense
 import matplotlib.pyplot as plt
 from decimal import Decimal
+from Def_Lbar import customWeights
 
 # References
 # [1] Bartlett et al. ”Nearly-tight VC-dimension and pseudodimension bounds for piecewise 
@@ -76,17 +77,46 @@ def compModel(d, w_i, L):
 
     return model
 
+def compCustomModel(d, w_s, L):
+    # Setup a Sequential NN
+    model = Sequential()
+
+    # Setup Input Layer
+    model.add(Dense(int(w_s[0]), activation='relu', kernel_initializer='RandomUniform',
+        input_dim=d))
+
+    # Setup Hidden Layers
+    if(L > 2):
+        for i in range(1,L-2):
+            model.add(Dense(int(w_s[i]), activation='relu', kernel_initializer='RandomUniform'))
+
+    # Setup Output Layer
+    model.add(Dense(1, activation='relu', kernel_initializer='RandomUniform'))
+
+    # Print Model Details
+    model.count_params()
+    model.summary()
+
+    # Configure Model for Training
+    model.compile(optimizer='sgd', loss='mean_squared_error',
+        metrics=['binary_accuracy'])
+
+    return model
+    
+
 # Build/Train Model and Plot Training Loss
 def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs,W):
-
+    import time 
     # Build Model
     W = initParams(VC, L)
     hidden_nodes = initNodes(L, W, d)
     model = compModel(d, hidden_nodes, L)
 
     # Train Model
+    start = time.time()
     loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
-
+    end = time.time()
+    elapsed = end - start 
 
     # Setup Graphs
     node_string = ''
@@ -98,7 +128,7 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs,W):
 
     ax =plt.subplot(2, num_depths, x)
     plt.plot(loss_history.history['loss'],
-             label=(r'$\bf VC_{max}$ = '+r'%.2E' % Decimal(str(VC)) + r'   $\bf W$ = ' + '%.2E' % Decimal(str(W)) +'   '+node_string))
+             label=(r'$\bf VC_{max}$ = '+r'%.2E' % Decimal(str(VC)) + r'   $\bf W$ = ' + '%.2E' % Decimal(str(W)) +'   '+node_string + r'   $\bf train_time$ = ' + r'%.2E' % Decimal(str(elapsed))))
     # plt.title('Network Depth = '+str(L),fontsize=15,loc='left')
 
     plt.legend(loc='upper right', markerscale=50, bbox_to_anchor=(1, 1.35),
@@ -114,6 +144,52 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs,W):
     plt.xlabel('epoch')
     plt.grid(color='gray', linestyle='--', linewidth=.5)
     plt.subplot(2, num_depths, x+num_depths)
+    plt.plot(loss_history.history['binary_accuracy'])
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.grid(color='gray', linestyle='--', linewidth=.5)
+
+    return loss_history
+
+# Build/Train Model and Plot Training Loss
+def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, num_plts, x, epochs, minw):
+    import time 
+    # Build Model
+    W = initParams(VC, L)
+    cw = customWeights(L,W,d,concenLayer,minw)
+    w_s = cw[0] #pull the custom number of weights per layer as an array 
+    lbar = cw[1] #pull the defined network's assumed Lbar 
+    model = compCustomModel(d, w_s, L) #build the network given the fixed number of weights per layer 
+
+    # Train Model
+    start = time.time()
+    loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
+    end = time.time()
+    elapsed = end - start 
+
+    # Setup Graphs
+    lbar_string = r'$\bf lbar$ = ' + str(lbar) +', '
+    
+    key_str = "$VC_{max}$: upper bound of VC dimension \n$W$: total # of network parameters \n $lbar_i$: estimated Lbar $i$"
+
+    ax =plt.subplot(2, num_plts, x)
+    plt.plot(loss_history.history['loss'],
+             label=(r'$\bf VC_{max}$ = '+r'%.2E' % Decimal(str(VC)) + r'   $\bf W$ = ' + '%.2E' % Decimal(str(W)) +'   '+lbar_string + r'   $\bf train_time$ = ' + r'%.2E' % Decimal(str(elapsed))))
+    # plt.title('Network Depth = '+str(L),fontsize=15,loc='left')
+
+    plt.legend(loc='upper right', markerscale=50, bbox_to_anchor=(1, 1.35),
+      ncol=1, fancybox=True, shadow=True, fontsize=10,title=r'$\bf Network Parameters$'+'\n          (depth='+str(L)+')')
+
+
+    if x == 1:
+        props = dict(boxstyle='round', facecolor='white', alpha=0.5)
+        plt.text(0, 1.25, key_str, fontsize=10,
+                 horizontalalignment='left',
+                verticalalignment='top', bbox=props, transform=ax.transAxes)
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.grid(color='gray', linestyle='--', linewidth=.5)
+    plt.subplot(2, num_plts, num_plts+x)
     plt.plot(loss_history.history['binary_accuracy'])
     plt.ylabel('accuracy')
     plt.xlabel('epoch')

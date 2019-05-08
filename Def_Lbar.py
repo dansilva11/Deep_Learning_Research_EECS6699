@@ -6,7 +6,7 @@ from keras.layers import Dense
 import numpy as np
 
 # Custom Modules
-from Def_Model import initNodes
+#from Def_Model import initNodes
 
 # -- Variable Definitions -- 
 #   d = Input Data Dimensions
