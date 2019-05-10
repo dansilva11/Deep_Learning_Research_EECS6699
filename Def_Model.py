@@ -1,12 +1,15 @@
 import math
 import tensorflow as tf
 import numpy as np
+import time
 
 from keras import Sequential
 from keras.layers import Dense
+from keras.callbacks import History
 import matplotlib.pyplot as plt
 from decimal import Decimal
 from Def_Lbar import customWeights
+from Def_GMatrix import initGMatrix, dynamicGMatrix, calcLambdaMin
 
 # References
 # [1] Bartlett et al. ”Nearly-tight VC-dimension and pseudodimension bounds for piecewise 
@@ -53,16 +56,16 @@ def initParams(VC, L):
 
 # Setup model architecture
 def compModel(d, w_i, L):
-    # Setup a Sequential NN
+    # Setup a Sequential NN and Input layer
     model = Sequential()
 
-    # Setup Input Layer
+    # Setup 1st Hidden Layer
     model.add(Dense(w_i, activation='relu', kernel_initializer='RandomUniform',
         input_dim=d))
 
-    # Setup Hidden Layers
+    # Setup other Hidden Layers (2nd+)
     for i in range(0,L-2):
-        model.add(Dense(w_i, activation='relu', kernel_initializer='RandomUniform'))
+        model.add(Dense(w_i, activation='relu', kernel_initializer='RandomUniform', batch_input_shape=(None, 784)))
 
     # Setup Output Layer
     model.add(Dense(1, activation='relu', kernel_initializer='RandomUniform'))
@@ -105,35 +108,62 @@ def compCustomModel(d, w_s, L):
     
 
 # Build/Train Model and Plot Training Loss
-def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs,W):
-    import time 
+def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs, W):
+
     # Build Model
     W = initParams(VC, L)
     hidden_nodes = initNodes(L, W, d)
     model = compModel(d, hidden_nodes, L)
 
+    # Setup Gram (Infinity) Matrix
+    LambdaMin = []
+    weight_matrix = model.get_weights()
+    H = initGMatrix(x_train, weight_matrix, hidden_nodes)
+    lambda_min = calcLambdaMin(H)
+    print(lambda_min)
+
+    # Store in Gram Matrix and Lamda Min History
+    LambdaMin.append({0:lambda_min})
+
     # Train Model
+    initial_epoch = 0
+    curr_epochs = 0
+    num_epochs = 1000
     start = time.time()
-    loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
+
+    loss_history = History()
+    while curr_epochs < epochs:
+        curr_epochs += num_epochs
+        loss_history = model.fit(x_train, y_train, batch_size=len(x_train), initial_epoch = initial_epoch, epochs=curr_epochs, callbacks=[loss_history])
+
+        # Calculate Current Gram Matrix and Lambda Min
+        weight_matrix = model.get_weights()
+        H = dynamicGMatrix(x_train, weight_matrix, hidden_nodes)
+        lambda_min = calcLambdaMin(H)
+
+        # Store in Gram Matrix and Lamda Min History
+        initial_epoch += num_epochs
+        LambdaMin.append({initial_epoch:lambda_min})
+
     end = time.time()
     elapsed = end - start 
 
+    print(LambdaMin)
+
     # Setup Graphs
     node_string = ''
-    i=1
-    while i<L:
+    i = 1
+    while i < L:
         node_string = node_string + r'$\bf h_%s$ = '%i + str(hidden_nodes) +', '
         i+=1
-    key_str = "$VC_{max}$: upper bound of VC dimension \n$W$: total # of network parameters \n $h_i$: number of nodes in hidden layer $i$"
 
+    key_str = "$VC_{max}$: upper bound of VC dimension \n$W$: total # of network parameters \n $h_i$: number of nodes in hidden layer $i$"
     ax =plt.subplot(2, num_depths, x)
-    plt.plot(loss_history.history['loss'],
-             label=(r'$\bf VC_{max}$ = '+r'%.2E' % Decimal(str(VC)) + r'   $\bf W$ = ' + '%.2E' % Decimal(str(W)) +'   '+node_string + r'   $\bf train_time$ = ' + r'%.2E' % Decimal(str(elapsed))))
+    plt.plot(loss_history.history['loss'], label=(r'$\bf VC_{max}$ = '+r'%.2E' % Decimal(str(VC)) + r'   $\bf W$ = ' + '%.2E' % Decimal(str(W)) +'   '+node_string + r'   $\bf train time$ = ' + r'%.2E' % Decimal(str(elapsed))))
     # plt.title('Network Depth = '+str(L),fontsize=15,loc='left')
 
     plt.legend(loc='upper right', markerscale=50, bbox_to_anchor=(1, 1.35),
       ncol=1, fancybox=True, shadow=True, fontsize=10,title=r'$\bf Network Parameters$'+'\n          (depth='+str(L)+')')
-
 
     if x == 1:
         props = dict(boxstyle='round', facecolor='white', alpha=0.5)
@@ -172,7 +202,7 @@ def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, num_plts, x, epoch
     
     key_str = "$VC_{max}$: upper bound of VC dimension \n$W$: total # of network parameters \n $lbar_i$: estimated Lbar $i$"
 
-    ax =plt.subplot(2, num_plts, x)
+    ax = plt.subplot(2, num_plts, x)
     plt.plot(loss_history.history['loss'],
              label=(r'$\bf VC_{max}$ = '+r'%.2E' % Decimal(str(VC)) + r'   $\bf W$ = ' + '%.2E' % Decimal(str(W)) +'   '+lbar_string + r'   $\bf train_time$ = ' + r'%.2E' % Decimal(str(elapsed))))
     # plt.title('Network Depth = '+str(L),fontsize=15,loc='left')
