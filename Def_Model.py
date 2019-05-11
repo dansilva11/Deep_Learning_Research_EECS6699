@@ -131,10 +131,19 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs, W):
     num_epochs = 1000
     start = time.time()
 
+    # Initialize Loss History
     loss_history = History()
+    loss_history.on_train_begin()
+    loss_history.history['loss'] = []
+    loss_history.history['binary_accuracy'] = []
+
     while curr_epochs < epochs:
         curr_epochs += num_epochs
-        loss_history = model.fit(x_train, y_train, batch_size=len(x_train), initial_epoch = initial_epoch, epochs=curr_epochs, callbacks=[loss_history])
+        history = model.fit(x_train, y_train, batch_size=len(x_train), initial_epoch = initial_epoch, epochs=curr_epochs)
+
+        print(loss_history.history.keys())
+        loss_history.history['loss'].extend(history.history['loss'])
+        loss_history.history['binary_accuracy'].extend(history.history['binary_accuracy'])
 
         # Calculate Current Gram Matrix and Lambda Min
         weight_matrix = model.get_weights()
