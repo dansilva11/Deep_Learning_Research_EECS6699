@@ -42,12 +42,11 @@ def main(n=1000, d=10, epochs=500, depths=[2]):
     #	(2) 10 x # Samples (n)
     #	(3) (# Samples (n))^2 (Source: [2])
     # param_counts = [n, n**1.25, n**1.5, n**1.6, n**1.65, n**1.7, n**1.75,n**1.8, n**1.85, n**1.9, n**1.95, n**2]
-    param_counts = [n]
-    # param_counts = [n, n**1.25, n**1.5]
+    param_counts = [n, n**1.25, n**1.5]
 
     # Setup plot/counter
     fig = plt.figure()
-    plts = 4 # total number of sub-plots 
+    plts = len(depths) # total number of sub-plots 
     
     # ########################### PHASE 1 ###########################
     # #   Intention is to use a 2 layer network and find the minimal 
@@ -55,7 +54,7 @@ def main(n=1000, d=10, epochs=500, depths=[2]):
     # #       to capture reasonable overparameterization benefits 
     # ###############################################################
     
-    x = 1 #phase sub-plot position out of 3
+    x = 1 # Phase sub-plot position out of 3
     
     # Calculate VC-Dim for each weight count for a 2 layer network these input VC dimensions will be held constant
     # as L is increased
@@ -127,6 +126,6 @@ def main(n=1000, d=10, epochs=500, depths=[2]):
     return ;
 
 if __name__ == '__main__':
-	main(n=1000,d=10,epochs=3000,depths=[2,3])
+	main(n=1000,d=10,epochs=2000,depths=[2,3])
     
     

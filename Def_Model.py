@@ -136,19 +136,21 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs, W):
     loss_history.on_train_begin()
     loss_history.history['loss'] = []
     loss_history.history['binary_accuracy'] = []
+    loss_history.history['lambda_min'] = []
 
     while curr_epochs < epochs:
         curr_epochs += num_epochs
         history = model.fit(x_train, y_train, batch_size=len(x_train), initial_epoch = initial_epoch, epochs=curr_epochs)
 
-        print(loss_history.history.keys())
-        loss_history.history['loss'].extend(history.history['loss'])
-        loss_history.history['binary_accuracy'].extend(history.history['binary_accuracy'])
-
         # Calculate Current Gram Matrix and Lambda Min
         weight_matrix = model.get_weights()
         H = dynamicGMatrix(x_train, weight_matrix, hidden_nodes)
         lambda_min = calcLambdaMin(H)
+
+        # Append Loss History
+        loss_history.history['loss'].extend(history.history['loss'])
+        loss_history.history['binary_accuracy'].extend(history.history['binary_accuracy'])
+        loss_history.history['lambda_min'].extend([lambda_min]*num_epochs)
 
         # Store in Gram Matrix and Lamda Min History
         initial_epoch += num_epochs
@@ -163,11 +165,12 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs, W):
     node_string = ''
     i = 1
     while i < L:
-        node_string = node_string + r'$\bf h_%s$ = '%i + str(hidden_nodes) +', '
+        node_string = node_string + r'$h_%s$ = '%i + str(hidden_nodes) +', '
         i+=1
 
+    # Build Sub-Graphs
     key_str = "$VC_{max}$: upper bound of VC dimension \n$W$: total # of network parameters \n $h_i$: number of nodes in hidden layer $i$"
-    ax =plt.subplot(2, num_depths, x)
+    ax =plt.subplot(3, num_depths, x)
     plt.plot(loss_history.history['loss'], label=(r'$\bf VC_{max}$ = '+r'%.2E' % Decimal(str(VC)) + r'   $\bf W$ = ' + '%.2E' % Decimal(str(W)) +'   '+node_string + r'   $\bf train time$ = ' + r'%.2E' % Decimal(str(elapsed))))
     # plt.title('Network Depth = '+str(L),fontsize=15,loc='left')
 
@@ -182,9 +185,14 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs, W):
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.grid(color='gray', linestyle='--', linewidth=.5)
-    plt.subplot(2, num_depths, x+num_depths)
+    plt.subplot(3, num_depths, x+num_depths)
     plt.plot(loss_history.history['binary_accuracy'])
     plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.grid(color='gray', linestyle='--', linewidth=.5)
+    plt.subplot(3, num_depths, x+num_depths+num_depths)
+    plt.plot(loss_history.history['lambda_min'])
+    plt.ylabel('lambda_min')
     plt.xlabel('epoch')
     plt.grid(color='gray', linestyle='--', linewidth=.5)
 
