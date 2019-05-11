@@ -120,8 +120,6 @@ def buildSubModel(x_train, y_train, L, VC, d, x, epochs):
     weight_matrix_0 = model.get_weights()
     H0 = initGMatrix(x_train, weight_matrix_0, hidden_nodes)
 
-    # Init History
-    G_Matrix['gram_matrix'] = H0
 
     # Train Model
     start = time.time()
@@ -135,10 +133,7 @@ def buildSubModel(x_train, y_train, L, VC, d, x, epochs):
     M = maximalDist(weight_matrix, weight_matrix_0)
     lambda_min = calcLambdaMin(H)
 
-    H_list = G_Matrix['gram_matrix']
-    H_list.append(H)
-    G_Matrix['gram_matrix'].append(H0)
-    G_Matrix['gram_matrix'].append(H_list)
+    G_Matrix['gram_matrix'] = [H0,H]
     G_Matrix['max_dist'] = M
     G_Matrix['lambda_min'] = lambda_min
 
@@ -181,7 +176,7 @@ def buildSubModel(x_train, y_train, L, VC, d, x, epochs):
     # plt.xlabel('epoch')
     # plt.grid(color='gray', linestyle='--', linewidth=.5)
 
-    return loss_history
+    return loss_history, G_Matrix
 
 # Build/Train Model and Plot Training Loss
 def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, x, epochs, minw):
@@ -198,32 +193,22 @@ def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, x, epochs, minw):
     weight_matrix_0 = model.get_weights()
     H0 = initGMatrix(x_train, weight_matrix_0, hidden_nodes)
 
-    # Init History
-    loss_history = History()
-    loss_history.on_train_begin()
-    loss_history.history['loss'] = []
-    loss_history.history['binary_accuracy'] = []
-    loss_history.history['gram_matrix'] = [H0]
-    loss_history.history['max_dist'] = []
-    loss_history.history['lambda_min'] = []
     # Train Model
     start = time.time()
-    history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
+    loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
     end = time.time()
     elapsed = end - start
+
     # Calculate End Gram Matrix and Lambda Min
     weight_matrix = model.get_weights()
     H = dynamicGMatrix(x_train, weight_matrix, hidden_nodes, L)
     M = maximalDist(weight_matrix, weight_matrix_0)
     lambda_min = calcLambdaMin(H)
-    # Save Gram Matrix attributes
-    loss_history.history['gram_matrix'].extend(H)
-    loss_history.history['max_dist'].append(M)
-    loss_history.history['lambda_min'].extend(lambda_min)
 
-    # Append Loss History
-    loss_history.history['loss'].extend(history.history['loss'])
-    loss_history.history['binary_accuracy'].extend(history.history['binary_accuracy'])
+    G_Matrix['gram_matrix'] = [H0, H]
+    G_Matrix['max_dist'] = M
+    G_Matrix['lambda_min'] = lambda_min
+
     # Setup Graphs
     node_string = ''
     i = 1
@@ -262,4 +247,4 @@ def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, x, epochs, minw):
     # plt.xlabel('epoch')
     # plt.grid(color='gray', linestyle='--', linewidth=.5)
 
-    return loss_history
+    return loss_history, G_Matrix

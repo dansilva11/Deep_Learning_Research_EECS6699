@@ -112,8 +112,8 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
                 df['lambda_min'] = float(G_Matrix['lambda_min'][0])
                 datasave = datasave.append(df)
 
-    pickle.dump(datasave, open("/data/result_data"+str(time.time())+".p", "wb"))
-    pickle.dump(gram_list, open('/data/gram_matrix'+str(time.time())+'.p', "wb"))
+    pickle.dump(datasave, open(r'./data/result_data_'+str(round(time.time()))+".p", "wb"))
+    pickle.dump(gram_list, open(r'./data/gram_matrix_'+str(round(time.time()))+'.p', "wb"))
     end = time.time()
     print('Run Time = ' + str(end - start))
     plt.show()
