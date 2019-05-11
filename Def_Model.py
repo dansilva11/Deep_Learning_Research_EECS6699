@@ -116,22 +116,16 @@ def buildSubModel(x_train, y_train, L, VC, d, x, epochs):
     model = compModel(d, hidden_nodes, L)
 
     # Setup Gram (Infinity) Matrix
-    GMatrix = []
+    G_Matrix = {}
     weight_matrix_0 = model.get_weights()
     H0 = initGMatrix(x_train, weight_matrix_0, hidden_nodes)
 
     # Init History
-    loss_history = History()
-    loss_history.on_train_begin()
-    loss_history.history['loss'] = []
-    loss_history.history['binary_accuracy'] = []
-    loss_history.history['gram_matrix'] = [H0]
-    loss_history.history['max_dist'] = []
-    loss_history.history['lambda_min'] = []
+    G_Matrix['gram_matrix'] = H0
 
     # Train Model
     start = time.time()
-    history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
+    loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
     end = time.time()
     elapsed = end - start
 
@@ -141,10 +135,12 @@ def buildSubModel(x_train, y_train, L, VC, d, x, epochs):
     M = maximalDist(weight_matrix, weight_matrix_0)
     lambda_min = calcLambdaMin(H)
 
-    loss_history.history['gram_matrix'].extend(H)
-    loss_history.history['max_dist'].extend(M)
-    loss_history.history['lambda_min'].extend(lambda_min)
-
+    H_list = G_Matrix['gram_matrix']
+    H_list.append(H)
+    G_Matrix['gram_matrix'].append(H0)
+    G_Matrix['gram_matrix'].append(H_list)
+    G_Matrix['max_dist'] = M
+    G_Matrix['lambda_min'] = lambda_min
 
     end = time.time()
     elapsed = end - start 

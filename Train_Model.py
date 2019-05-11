@@ -10,6 +10,7 @@ from Def_GMatrix import calcGMatrix, calcLambdaMin
 import pickle
 import pandas as pd
 import time
+import os
 
 # References
 # [1] Bartlett et al. ”Nearly-tight VC-dimension and pseudodimension bounds for piecewise 
@@ -70,9 +71,16 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
         VCdims.append(W * 2 * math.log(W))
 
     # Create convergence rate graph
-    loss_histories = list()
     datasave = pd.DataFrame()
-    L = 2 # Fix depth L = 2
+    gram_list = []
+
+
+    # if os.path.isdir('./data') == False:
+    #     try:
+    #         os.makedirs('./data', 0o777)
+    #     except Exception as e:
+    #         print(e)
+    #         raise
 
     start = time.time()
     # Pass through each VCDim, construct the corresponding network, and train
@@ -82,23 +90,30 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
         for i in range(0,len(VCdims)):
             if custom_weights:
                 VC = VCdims[i]
-                loss_history = buildCustomModel(x_train, y_train, L, VC, d, cL, x, epochs, 5)
+                loss_history , G_Matrix = buildCustomModel(x_train, y_train, L, VC, d, cL, x, epochs, 5)
                 df = pd.DataFrame(loss_history.history)
                 df['epoch'] = df.index
                 df['VCdim'] = int(VC)
                 df['depth'] = L
+                gram_list.append(G_Matrix['gram_matrix'])
+                df['max_dist'] = float(G_Matrix['max_dist'][0])
+                df['lambda_min'] = float(G_Matrix['lambda_min'][0])
                 datasave = datasave.append(df)
 
             else:
                 VC = VCdims[i]
-                loss_history = buildSubModel(x_train, y_train, L, VC, d,  x, epochs)
+                loss_history, G_Matrix = buildSubModel(x_train, y_train, L, VC, d,  x, epochs)
                 df = pd.DataFrame(loss_history.history)
                 df['epoch'] = df.index
                 df['VCdim'] = int(VC)
                 df['depth'] = L
+                gram_list.append(G_Matrix['gram_matrix'])
+                df['max_dist'] = float(G_Matrix['max_dist'][0])
+                df['lambda_min'] = float(G_Matrix['lambda_min'][0])
                 datasave = datasave.append(df)
 
-    pickle.dump(datasave, open("result_data.p", "wb"))
+    pickle.dump(datasave, open("/data/result_data"+str(time.time())+".p", "wb"))
+    pickle.dump(gram_list, open('/data/gram_matrix'+str(time.time())+'.p', "wb"))
     end = time.time()
     print('Run Time = ' + str(end - start))
     plt.show()
@@ -157,5 +172,5 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
     return
 
 if __name__ == '__main__':
-	main(n=1000,d=10,epochs=2000,depths=[2,3])
+	main(n=1000,d=10,epochs=5,depths=[2])
 
