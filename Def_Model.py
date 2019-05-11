@@ -123,7 +123,7 @@ def buildSubModel(x_train, y_train, L, VC, d, x, epochs):
 
     # Train Model
     start = time.time()
-    loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
+    loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs, verbose=0)
     end = time.time()
     elapsed = end - start
 
@@ -176,7 +176,7 @@ def buildSubModel(x_train, y_train, L, VC, d, x, epochs):
     # plt.xlabel('epoch')
     # plt.grid(color='gray', linestyle='--', linewidth=.5)
 
-    return loss_history, G_Matrix
+    return loss_history, G_Matrix, W, hidden_nodes
 
 # Build/Train Model and Plot Training Loss
 def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, x, epochs, minw):
@@ -189,13 +189,13 @@ def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, x, epochs, minw):
     model = compCustomModel(d, w_s, L)  # build the network given the fixed number of weights per layer
     hidden_nodes = sum(w_s)
     # Setup Gram (Infinity) Matrix
-    GMatrix = []
+    G_Matrix = {}
     weight_matrix_0 = model.get_weights()
     H0 = initGMatrix(x_train, weight_matrix_0, hidden_nodes)
 
     # Train Model
     start = time.time()
-    loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
+    loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs, verbose=0)
     end = time.time()
     elapsed = end - start
 
@@ -247,4 +247,4 @@ def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, x, epochs, minw):
     # plt.xlabel('epoch')
     # plt.grid(color='gray', linestyle='--', linewidth=.5)
 
-    return loss_history, G_Matrix
+    return loss_history, G_Matrix, W, w_s

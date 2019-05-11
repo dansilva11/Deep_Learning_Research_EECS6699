@@ -88,28 +88,35 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
         # Setup plot/counter
         fig = plt.figure()
         for i in range(0,len(VCdims)):
+            print("Training Model:: Depth = " + str(L) + " | VCDim = " + str(round(VCdims[i])) + " | Custom = " + str(
+                custom_weights) + " | cL = " + str(cL))
+            print("Local current time :", time.asctime(time.localtime(time.time())))
             if custom_weights:
                 VC = VCdims[i]
-                loss_history , G_Matrix = buildCustomModel(x_train, y_train, L, VC, d, cL, x, epochs, 5)
+                loss_history , G_Matrix , W, hidden_nodes = buildCustomModel(x_train, y_train, L, VC, d, cL, x, epochs, 5)
                 df = pd.DataFrame(loss_history.history)
                 df['epoch'] = df.index
                 df['VCdim'] = int(VC)
                 df['depth'] = L
+                df['param_count'] = W
+                df['node_count'] = hidden_nodes
                 gram_list.append(G_Matrix['gram_matrix'])
-                df['max_dist'] = float(G_Matrix['max_dist'][0])
-                df['lambda_min'] = float(G_Matrix['lambda_min'][0])
+                df['max_dist'] = float(max(G_Matrix['max_dist']))
+                df['lambda_min'] = float(min(G_Matrix['lambda_min']))
                 datasave = datasave.append(df)
 
             else:
                 VC = VCdims[i]
-                loss_history, G_Matrix = buildSubModel(x_train, y_train, L, VC, d,  x, epochs)
+                loss_history, G_Matrix, W, hidden_nodes = buildSubModel(x_train, y_train, L, VC, d,  x, epochs)
                 df = pd.DataFrame(loss_history.history)
                 df['epoch'] = df.index
                 df['VCdim'] = int(VC)
                 df['depth'] = L
+                df['param_count'] = W
+                df['node_count'] = hidden_nodes
                 gram_list.append(G_Matrix['gram_matrix'])
-                df['max_dist'] = float(G_Matrix['max_dist'][0])
-                df['lambda_min'] = float(G_Matrix['lambda_min'][0])
+                df['max_dist'] = float(max(G_Matrix['max_dist']))
+                df['lambda_min'] = float(min(G_Matrix['lambda_min']))
                 datasave = datasave.append(df)
 
     pickle.dump(datasave, open(r'./data/result_data_'+str(round(time.time()))+".p", "wb"))
@@ -172,5 +179,5 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
     return
 
 if __name__ == '__main__':
-	main(n=1000,d=10,epochs=5,depths=[2])
+	main(n=1000, d=10, load_data = True,epochs=5, depths=[2,3], cL = 1, custom_weights = False, exp_list=[1,1.5,2])
 
