@@ -99,7 +99,7 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
                 df['VCdim'] = int(VC)
                 df['depth'] = L
                 df['param_count'] = W
-                df['node_count'] = hidden_nodes
+                df['node_count'] = [hidden_nodes]*len(df)
                 gram_list.append(G_Matrix['gram_matrix'])
                 df['max_dist'] = float(max(G_Matrix['max_dist']))
                 df['lambda_min'] = float(min(G_Matrix['lambda_min']))
@@ -179,5 +179,5 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
     return
 
 if __name__ == '__main__':
-	main(n=1000, d=10, load_data = True,epochs=5, depths=[2,3], cL = 1, custom_weights = False, exp_list=[1,1.5,2])
+	main(n=1000, d=10, load_data = True,epochs=5, depths=[2,3], cL = 1, custom_weights = True, exp_list=[1,1.25,1.5])
 
