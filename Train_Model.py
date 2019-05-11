@@ -7,6 +7,9 @@ from Data_Gen import synthesize
 from Def_Model import buildSubModel, buildCustomModel, initParams
 from Def_Lbar import customWeights
 from Def_GMatrix import calcGMatrix, calcLambdaMin
+import pickle
+import pandas as pd
+import time
 
 # References
 # [1] Bartlett et al. ”Nearly-tight VC-dimension and pseudodimension bounds for piecewise 
@@ -29,20 +32,23 @@ from Def_GMatrix import calcGMatrix, calcLambdaMin
 #    lambda_min = Smallest, real eigenvalue of Gram Matrix
 
 # Creates models and plots performance based on weight count and depth input lists
-def main(n=1000, d=10, epochs=500, depths=[2]):
+def main(n=1000, d=10, epochs=500, depths=[2], cL = 1, custom = False, exp_list=[1,1.25,1.5,2]):
     # Setup network/training variables
-    X,Y = synthesize(n, d)
+    # X,Y = synthesize(n, d)
 
     # Split-up sample set into train/test sets
-    x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0)
-
+    # x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0)
+    x_train = pickle.load(open("x_data.p", "rb"))
+    y_train = pickle.load(open("y_data.p", "rb"))
     ####need to edit this comment with final setting###
     # Setup Weight Counts: # Hidden nodes (m) =
     #	(1) 5x # Samples
     #	(2) 10 x # Samples (n)
     #	(3) (# Samples (n))^2 (Source: [2])
     # param_counts = [n, n**1.25, n**1.5, n**1.6, n**1.65, n**1.7, n**1.75,n**1.8, n**1.85, n**1.9, n**1.95, n**2]
-    param_counts = [n, n**1.25, n**1.5]
+    param_counts = []
+    for exp in exp_list:
+        param_counts.append(n**exp)
 
     # Setup plot/counter
     fig = plt.figure()
@@ -64,69 +70,91 @@ def main(n=1000, d=10, epochs=500, depths=[2]):
 
     # Create convergence rate graph
     loss_histories = list()
-    
+    datasave = pd.DataFrame()
     L = 2 # Fix depth L = 2
-    # Pass through each VCDim, construct the corresponding network, and train 
-    for i in range(0,len(VCdims)):
-        VC = VCdims[i]
-        W = param_counts[i]
-        loss_histories.append(buildSubModel(x_train, y_train, L, VC, d, plts, x, epochs, W))
 
+    start = time.time()
+    # Pass through each VCDim, construct the corresponding network, and train
+    for L in depths:
+        # Setup plot/counter
+        fig = plt.figure()
+        for i in range(0,len(VCdims)):
+            if custom:
+                VC = VCdims[i]
+                loss_history = buildCustomModel(x_train, y_train, L, VC, d, cL, x, epochs, 5)
+                df = pd.DataFrame(loss_history.history)
+                df['epoch'] = df.index
+                df['VCdim'] = int(VC)
+                df['depth'] = L
+                datasave = datasave.append(df)
+
+            else:
+                VC = VCdims[i]
+                loss_history = buildSubModel(x_train, y_train, L, VC, d,  x, epochs)
+                df = pd.DataFrame(loss_history.history)
+                df['epoch'] = df.index
+                df['VCdim'] = int(VC)
+                df['depth'] = L
+                datasave = datasave.append(df)
+
+    pickle.dump(datasave, open("result_data.p", "wb"))
+    end = time.time()
+    print('Run Time = ' + str(end - start))
+    plt.show()
     # # Show phase sub-plot 
     # plt.show()
 
-    ########################### PHASE 2 ###########################
-    #   Intention is use a fixed minimal VCDim from Phase 1 and  
-    #       introduce depth. With fixed VCDim we will construct 
-    #       an equally weighted CNN and observe training 
-    #       acceleration at each step. 
-    ###############################################################
-    
-    z = 2 #phase sub-plot position out of 3
-    
-    # Assume you have a way to pick some minimal VCDim
-    VCstar = max(VCdims)
-    
-    # Create convergence rate graph 
-    depth_histories = list()
-    
-    # Pass through each depth in depths, construct corresponding network, and train 
-    for L in depths:
-        print("Depth: %i" % L)
-        Wd = initParams(VCstar,L)
-        depth_histories.append(buildSubModel(x_train, y_train, L, VCstar, d, plts, z, epochs, Wd))
-    
-    # Show phase sub-plot 
-    plt.show()
-    
-    # ########################### PHASE 3 ###########################
-    # #   Intention is use a fixed maximal depth L from Phase 2 and
-    # #       vary the position of weights. VCDim will remain fixed 
-    # #       from Phase 1. Variation will concentrate weights in a 
-    # #       single layer with minimal number of nodes (minw) in all
-    # #       other layers. This contrasts with Phase 2's equally 
-    # #       weighted initialization. 
+    # ########################### PHASE 2 ###########################
+    # #   Intention is use a fixed minimal VCDim from Phase 1 and
+    # #       introduce depth. With fixed VCDim we will construct
+    # #       an equally weighted CNN and observe training
+    # #       acceleration at each step.
     # ###############################################################
-    
+    #
+    # z = 2 #phase sub-plot position out of 3
+    #
+    # # Assume you have a way to pick some minimal VCDim
+    # VCstar = max(VCdims)
+    #
+    # # Create convergence rate graph
+    # depth_histories = list()
+    #
+    # # Pass through each depth in depths, construct corresponding network, and train
+    # for L in depths:
+    #     print("Depth: %i" % L)
+    #     Wd = initParams(VCstar,L)
+    #     depth_histories.append(buildSubModel(x_train, y_train, L, VCstar, d, plts, z, epochs, Wd))
+    #
+    # # Show phase sub-plot
+    # plt.show()
+    #
+    # # ########################### PHASE 3 ###########################
+    # # #   Intention is use a fixed maximal depth L from Phase 2 and
+    # # #       vary the position of weights. VCDim will remain fixed
+    # # #       from Phase 1. Variation will concentrate weights in a
+    # # #       single layer with minimal number of nodes (minw) in all
+    # # #       other layers. This contrasts with Phase 2's equally
+    # # #       weighted initialization.
+    # # ###############################################################
+    #
     # c = 3 #phase sub-plot position out of 3
-    
-    # # Assume you have a way to pick some maximal L 
+    #
+    # # Assume you have a way to pick some maximal L
     # L = max(depths)
-    
-    # # Create convergence rate graph 
+    #
+    # # Create convergence rate graph
     # lbar_histories = list()
-    
-    # # Pass through each concentrated layer cL, construct corresponding network, and train 
+    #
+    # # Pass through each concentrated layer cL, construct corresponding network, and train
     # for cL in range(1+L):
     #     if(cL>0): #cL starts from index 1
     #         lbar_histories.append(buildCustomModel(x_train, y_train, L, VCstar, d, cL, plts, c, epochs, 5))
-    
-    # # Show phase sub-plot 
+    #
+    # # Show phase sub-plot
     # plt.show()
     
-    return ;
+    return
 
 if __name__ == '__main__':
 	main(n=1000,d=10,epochs=2000,depths=[2,3])
-    
-    
+
