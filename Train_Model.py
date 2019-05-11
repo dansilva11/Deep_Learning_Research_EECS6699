@@ -32,14 +32,17 @@ import time
 #    lambda_min = Smallest, real eigenvalue of Gram Matrix
 
 # Creates models and plots performance based on weight count and depth input lists
-def main(n=1000, d=10, epochs=500, depths=[2], cL = 1, custom = False, exp_list=[1,1.25,1.5,2]):
+def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_weights = False, exp_list=[1]):
     # Setup network/training variables
-    # X,Y = synthesize(n, d)
+    if load_data:
+        x_train = pickle.load(open("x_data.p", "rb"))
+        y_train = pickle.load(open("y_data.p", "rb"))
+    else:
+        X,Y = synthesize(n, d)
 
-    # Split-up sample set into train/test sets
-    # x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0)
-    x_train = pickle.load(open("x_data.p", "rb"))
-    y_train = pickle.load(open("y_data.p", "rb"))
+        # Split-up sample set into train/test sets
+        x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0)
+
     ####need to edit this comment with final setting###
     # Setup Weight Counts: # Hidden nodes (m) =
     #	(1) 5x # Samples
@@ -50,9 +53,7 @@ def main(n=1000, d=10, epochs=500, depths=[2], cL = 1, custom = False, exp_list=
     for exp in exp_list:
         param_counts.append(n**exp)
 
-    # Setup plot/counter
-    fig = plt.figure()
-    plts = len(depths) # total number of sub-plots 
+
     
     ########################### PHASE 1 ###########################
     #   Intention is to use a 2 layer network and find the minimal 
@@ -79,7 +80,7 @@ def main(n=1000, d=10, epochs=500, depths=[2], cL = 1, custom = False, exp_list=
         # Setup plot/counter
         fig = plt.figure()
         for i in range(0,len(VCdims)):
-            if custom:
+            if custom_weights:
                 VC = VCdims[i]
                 loss_history = buildCustomModel(x_train, y_train, L, VC, d, cL, x, epochs, 5)
                 df = pd.DataFrame(loss_history.history)

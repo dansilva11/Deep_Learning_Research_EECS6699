@@ -149,7 +149,6 @@ def buildSubModel(x_train, y_train, L, VC, d, x, epochs):
     end = time.time()
     elapsed = end - start 
 
-    print(LambdaMin)
 
     # Setup Graphs
     node_string = ''
@@ -190,20 +189,45 @@ def buildSubModel(x_train, y_train, L, VC, d, x, epochs):
 
 # Build/Train Model and Plot Training Loss
 def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, x, epochs, minw):
-    import time 
+    import time
     # Build Model
     W = initParams(VC, L)
-    cw = customWeights(L,W,d,concenLayer,minw)
-    w_s = cw[0] #pull the custom number of weights per layer as an array 
-    lbar = cw[1] #pull the defined network's assumed Lbar 
-    model = compCustomModel(d, w_s, L) #build the network given the fixed number of weights per layer 
+    cw = customWeights(L, W, d, concenLayer, minw)
+    w_s = cw[0]  # pull the custom number of weights per layer as an array
+    lbar = cw[1]  # pull the defined network's assumed Lbar
+    model = compCustomModel(d, w_s, L)  # build the network given the fixed number of weights per layer
+    hidden_nodes = sum(w_s)
+    # Setup Gram (Infinity) Matrix
+    GMatrix = []
+    weight_matrix_0 = model.get_weights()
+    H0 = initGMatrix(x_train, weight_matrix_0, hidden_nodes)
 
+    # Init History
+    loss_history = History()
+    loss_history.on_train_begin()
+    loss_history.history['loss'] = []
+    loss_history.history['binary_accuracy'] = []
+    loss_history.history['gram_matrix'] = [H0]
+    loss_history.history['max_dist'] = []
+    loss_history.history['lambda_min'] = []
     # Train Model
     start = time.time()
-    loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
+    history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
     end = time.time()
     elapsed = end - start
+    # Calculate End Gram Matrix and Lambda Min
+    weight_matrix = model.get_weights()
+    H = dynamicGMatrix(x_train, weight_matrix, hidden_nodes, L)
+    M = maximalDist(weight_matrix, weight_matrix_0)
+    lambda_min = calcLambdaMin(H)
+    # Save Gram Matrix attributes
+    loss_history.history['gram_matrix'].extend(H)
+    loss_history.history['max_dist'].append(M)
+    loss_history.history['lambda_min'].extend(lambda_min)
 
+    # Append Loss History
+    loss_history.history['loss'].extend(history.history['loss'])
+    loss_history.history['binary_accuracy'].extend(history.history['binary_accuracy'])
     # Setup Graphs
     node_string = ''
     i = 1
