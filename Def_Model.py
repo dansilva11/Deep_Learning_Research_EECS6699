@@ -144,7 +144,7 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs, W):
 
         # Calculate Current Gram Matrix and Lambda Min
         weight_matrix = model.get_weights()
-        H = dynamicGMatrix(x_train, weight_matrix, hidden_nodes)
+        H = dynamicGMatrix(x_train, weight_matrix, hidden_nodes, L)
         lambda_min = calcLambdaMin(H)
 
         # Append Loss History

@@ -51,21 +51,30 @@ def initGMatrix(x, weight_matrix, hidden_nodes):
 	# Gram Matrix: Previous Covariance Matrix * [Input Data (n,d) * Input Data (T) (d,n)] = (n,n)
 	return x.dot(x.T)*G
 
-def dynamicGMatrix(x, weight_matrix, hidden_nodes):
+def dynamicGMatrix(x, weight_matrix, hidden_nodes, L):
 	# Get rid of the bias parameters
 	weight_matrix = weight_matrix[::2]
-
 	part_3 = calcGMatrix(x, weight_matrix, hidden_nodes)
 
 	# Gram Matrix for other Hidden Layers
+	i = 1
 	for weights in weight_matrix[1:-1]:
-		
-		# ith Layer Weight Matrix (m,m) * Previous Layer (T) (m,m) = (m,m)
-		part_1 = weights.T.dot(part_3.T)
+		if L > 2:
+			# ith Layer Weight Matrix (m,m) * Previous Layer (m,n) = (m,n)
+			part_1 = weights.T.dot(part_3)
 
-		# ReLU Activation: Max[Zero Matrix(m,m), Sign of Part 2 (m,m)] = (m,m)
-		part_2 = np.zeros(part_1.shape)
-		part_3 = np.maximum(part_2,np.sign(part_1))
+			# ReLU Activation: Max[Zero Matrix(m,n), Sign of Part 2 (m,n)] = (m,n)
+			part_2 = np.zeros(part_1.shape)
+			part_3 = np.maximum(part_2,np.sign(part_1))
+
+		else:		
+			# ith Layer Weight Matrix (m,m) * Previous Layer (T) (m,m) = (m,m)
+			part_1 = weights.T.dot(part_3.T)
+
+			# ReLU Activation: Max[Zero Matrix(m,m), Sign of Part 2 (m,m)] = (m,m)
+			part_2 = np.zeros(part_1.shape)
+			part_3 = np.maximum(part_2,np.sign(part_1))
+		i += 1
 
 	# Final Gram Matrix: 
 	#	[Input Data (n,d) * Input Data (T) (d,n)] 

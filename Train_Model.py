@@ -48,11 +48,11 @@ def main(n=1000, d=10, epochs=500, depths=[2]):
     fig = plt.figure()
     plts = len(depths) # total number of sub-plots 
     
-    # ########################### PHASE 1 ###########################
-    # #   Intention is to use a 2 layer network and find the minimal 
-    # #       number of nodes (and corresponding minimal VCDim) 
-    # #       to capture reasonable overparameterization benefits 
-    # ###############################################################
+    ########################### PHASE 1 ###########################
+    #   Intention is to use a 2 layer network and find the minimal 
+    #       number of nodes (and corresponding minimal VCDim) 
+    #       to capture reasonable overparameterization benefits 
+    ###############################################################
     
     x = 1 # Phase sub-plot position out of 3
     
@@ -72,31 +72,32 @@ def main(n=1000, d=10, epochs=500, depths=[2]):
         W = param_counts[i]
         loss_histories.append(buildSubModel(x_train, y_train, L, VC, d, plts, x, epochs, W))
 
-    # Show phase sub-plot 
-    plt.show()
-
-    # ########################### PHASE 2 ###########################
-    # #   Intention is use a fixed minimal VCDim from Phase 1 and  
-    # #       introduce depth. With fixed VCDim we will construct 
-    # #       an equally weighted CNN and observe training 
-    # #       acceleration at each step. 
-    # ###############################################################
-    
-    # z = 2 #phase sub-plot position out of 3
-    
-    # # Assume you have a way to pick some minimal VCDim
-    # VCstar = max(VCdims)
-    
-    # # Create convergence rate graph 
-    # depth_histories = list()
-    
-    # # Pass through each depth in depths, construct corresponding network, and train 
-    # for L in depths:
-    #     Wd = initParams(VCstar,L)
-    #     depth_histories.append(buildSubModel(x_train, y_train ,L, VCstar, d, plts, z, epochs, Wd))
-    
     # # Show phase sub-plot 
     # plt.show()
+
+    ########################### PHASE 2 ###########################
+    #   Intention is use a fixed minimal VCDim from Phase 1 and  
+    #       introduce depth. With fixed VCDim we will construct 
+    #       an equally weighted CNN and observe training 
+    #       acceleration at each step. 
+    ###############################################################
+    
+    z = 2 #phase sub-plot position out of 3
+    
+    # Assume you have a way to pick some minimal VCDim
+    VCstar = max(VCdims)
+    
+    # Create convergence rate graph 
+    depth_histories = list()
+    
+    # Pass through each depth in depths, construct corresponding network, and train 
+    for L in depths:
+        print("Depth: %i" % L)
+        Wd = initParams(VCstar,L)
+        depth_histories.append(buildSubModel(x_train, y_train, L, VCstar, d, plts, z, epochs, Wd))
+    
+    # Show phase sub-plot 
+    plt.show()
     
     # ########################### PHASE 3 ###########################
     # #   Intention is use a fixed maximal depth L from Phase 2 and
@@ -126,6 +127,6 @@ def main(n=1000, d=10, epochs=500, depths=[2]):
     return ;
 
 if __name__ == '__main__':
-	main(n=1000,d=10,epochs=10000,depths=[2,3])
+	main(n=1000,d=10,epochs=2000,depths=[2,3])
     
     
