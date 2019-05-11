@@ -126,6 +126,6 @@ def main(n=1000, d=10, epochs=500, depths=[2]):
     return ;
 
 if __name__ == '__main__':
-	main(n=1000,d=10,epochs=2000,depths=[2,3])
+	main(n=1000,d=10,epochs=10000,depths=[2,3])
     
     
