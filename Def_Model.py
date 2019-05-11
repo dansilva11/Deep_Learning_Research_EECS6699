@@ -9,7 +9,7 @@ from keras.callbacks import History
 import matplotlib.pyplot as plt
 from decimal import Decimal
 from Def_Lbar import customWeights
-from Def_GMatrix import initGMatrix, dynamicGMatrix, calcLambdaMin
+from Def_GMatrix import initGMatrix, dynamicGMatrix, calcLambdaMin, maximalDist
 
 # References
 # [1] Bartlett et al. ”Nearly-tight VC-dimension and pseudodimension bounds for piecewise 
@@ -108,7 +108,7 @@ def compCustomModel(d, w_s, L):
     
 
 # Build/Train Model and Plot Training Loss
-def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs, W):
+def buildSubModel(x_train, y_train, L, VC, d, x, epochs):
 
     # Build Model
     W = initParams(VC, L)
@@ -116,45 +116,35 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs, W):
     model = compModel(d, hidden_nodes, L)
 
     # Setup Gram (Infinity) Matrix
-    LambdaMin = []
-    weight_matrix = model.get_weights()
-    H = initGMatrix(x_train, weight_matrix, hidden_nodes)
-    lambda_min = calcLambdaMin(H)
-    print(lambda_min)
+    GMatrix = []
+    weight_matrix_0 = model.get_weights()
+    H0 = initGMatrix(x_train, weight_matrix_0, hidden_nodes)
 
-    # Store in Gram Matrix and Lamda Min History
-    LambdaMin.append({0:lambda_min})
-
-    # Train Model
-    initial_epoch = 0
-    curr_epochs = 0
-    num_epochs = 1000
-    start = time.time()
-
-    # Initialize Loss History
+    # Init History
     loss_history = History()
     loss_history.on_train_begin()
     loss_history.history['loss'] = []
     loss_history.history['binary_accuracy'] = []
+    loss_history.history['gram_matrix'] = [H0]
+    loss_history.history['max_dist'] = []
     loss_history.history['lambda_min'] = []
 
-    while curr_epochs < epochs:
-        curr_epochs += num_epochs
-        history = model.fit(x_train, y_train, batch_size=len(x_train), initial_epoch = initial_epoch, epochs=curr_epochs)
+    # Train Model
+    start = time.time()
+    history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
+    end = time.time()
+    elapsed = end - start
 
-        # Calculate Current Gram Matrix and Lambda Min
-        weight_matrix = model.get_weights()
-        H = dynamicGMatrix(x_train, weight_matrix, hidden_nodes, L)
-        lambda_min = calcLambdaMin(H)
+    # Calculate End Gram Matrix and Lambda Min
+    weight_matrix = model.get_weights()
+    H = dynamicGMatrix(x_train, weight_matrix, hidden_nodes, L)
+    M = maximalDist(weight_matrix, weight_matrix_0)
+    lambda_min = calcLambdaMin(H)
 
-        # Append Loss History
-        loss_history.history['loss'].extend(history.history['loss'])
-        loss_history.history['binary_accuracy'].extend(history.history['binary_accuracy'])
-        loss_history.history['lambda_min'].extend([lambda_min]*num_epochs)
+    loss_history.history['gram_matrix'].extend(H)
+    loss_history.history['max_dist'].extend(M)
+    loss_history.history['lambda_min'].extend(lambda_min)
 
-        # Store in Gram Matrix and Lamda Min History
-        initial_epoch += num_epochs
-        LambdaMin.append({initial_epoch:lambda_min})
 
     end = time.time()
     elapsed = end - start 
@@ -170,7 +160,7 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs, W):
 
     # Build Sub-Graphs
     key_str = "$VC_{max}$: upper bound of VC dimension \n$W$: total # of network parameters \n $h_i$: number of nodes in hidden layer $i$"
-    ax =plt.subplot(3, num_depths, x)
+    ax =plt.subplot(2, 1, 1)
     plt.plot(loss_history.history['loss'], label=(r'$\bf VC_{max}$ = '+r'%.2E' % Decimal(str(VC)) + r'   $\bf W$ = ' + '%.2E' % Decimal(str(W)) +'   '+node_string + r'   $\bf train time$ = ' + r'%.2E' % Decimal(str(elapsed))))
     # plt.title('Network Depth = '+str(L),fontsize=15,loc='left')
 
@@ -185,21 +175,21 @@ def buildSubModel(x_train, y_train, L, VC, d, num_depths, x, epochs, W):
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.grid(color='gray', linestyle='--', linewidth=.5)
-    plt.subplot(3, num_depths, x+num_depths)
+    plt.subplot(2, 1, 2)
     plt.plot(loss_history.history['binary_accuracy'])
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.grid(color='gray', linestyle='--', linewidth=.5)
-    plt.subplot(3, num_depths, x+num_depths+num_depths)
-    plt.plot(loss_history.history['lambda_min'])
-    plt.ylabel('lambda_min')
-    plt.xlabel('epoch')
-    plt.grid(color='gray', linestyle='--', linewidth=.5)
+    # plt.subplot(3, num_depths, x+num_depths+num_depths)
+    # plt.plot(loss_history.history['lambda_min'])
+    # plt.ylabel('lambda_min')
+    # plt.xlabel('epoch')
+    # plt.grid(color='gray', linestyle='--', linewidth=.5)
 
     return loss_history
 
 # Build/Train Model and Plot Training Loss
-def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, num_plts, x, epochs, minw):
+def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, x, epochs, minw):
     import time 
     # Build Model
     W = initParams(VC, L)
@@ -212,34 +202,44 @@ def buildCustomModel(x_train, y_train, L, VC, d, concenLayer, num_plts, x, epoch
     start = time.time()
     loss_history = model.fit(x_train, y_train, batch_size=len(x_train), epochs=epochs)
     end = time.time()
-    elapsed = end - start 
+    elapsed = end - start
 
     # Setup Graphs
-    lbar_string = r'$\bf lbar$ = ' + str(lbar) +', '
-    
-    key_str = "$VC_{max}$: upper bound of VC dimension \n$W$: total # of network parameters \n $lbar_i$: estimated Lbar $i$"
+    node_string = ''
+    i = 1
+    while i < L:
+        node_string = node_string + r'$h_%s$ = ' % i + str(hidden_nodes) + ', '
+        i += 1
 
-    ax = plt.subplot(2, num_plts, x)
-    plt.plot(loss_history.history['loss'],
-             label=(r'$\bf VC_{max}$ = '+r'%.2E' % Decimal(str(VC)) + r'   $\bf W$ = ' + '%.2E' % Decimal(str(W)) +'   '+lbar_string + r'   $\bf train_time$ = ' + r'%.2E' % Decimal(str(elapsed))))
+    # Build Sub-Graphs
+    key_str = "$VC_{max}$: upper bound of VC dimension \n$W$: total # of network parameters \n $h_i$: number of nodes in hidden layer $i$"
+    ax = plt.subplot(2, 1, 1)
+    plt.plot(loss_history.history['loss'], label=(
+                r'$\bf VC_{max}$ = ' + r'%.2E' % Decimal(str(VC)) + r'   $\bf W$ = ' + '%.2E' % Decimal(
+            str(W)) + '   ' + node_string + r'   $\bf train time$ = ' + r'%.2E' % Decimal(str(elapsed))))
     # plt.title('Network Depth = '+str(L),fontsize=15,loc='left')
 
     plt.legend(loc='upper right', markerscale=50, bbox_to_anchor=(1, 1.35),
-      ncol=1, fancybox=True, shadow=True, fontsize=10,title=r'$\bf Network Parameters$'+'\n          (depth='+str(L)+')')
-
+               ncol=1, fancybox=True, shadow=True, fontsize=10,
+               title=r'$\bf Network Parameters$' + '\n          (depth=' + str(L) + ')')
 
     if x == 1:
         props = dict(boxstyle='round', facecolor='white', alpha=0.5)
         plt.text(0, 1.25, key_str, fontsize=10,
                  horizontalalignment='left',
-                verticalalignment='top', bbox=props, transform=ax.transAxes)
+                 verticalalignment='top', bbox=props, transform=ax.transAxes)
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.grid(color='gray', linestyle='--', linewidth=.5)
-    plt.subplot(2, num_plts, num_plts+x)
+    plt.subplot(2, 1, 2)
     plt.plot(loss_history.history['binary_accuracy'])
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
     plt.grid(color='gray', linestyle='--', linewidth=.5)
+    # plt.subplot(3, num_depths, x+num_depths+num_depths)
+    # plt.plot(loss_history.history['lambda_min'])
+    # plt.ylabel('lambda_min')
+    # plt.xlabel('epoch')
+    # plt.grid(color='gray', linestyle='--', linewidth=.5)
 
     return loss_history

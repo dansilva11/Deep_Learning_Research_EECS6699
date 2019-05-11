@@ -9,6 +9,18 @@ from scipy.sparse.linalg import eigs
 #   G = (Square) Gram Matrix of d x d dimensions
 #   lambda_min = Smallest, real eigenvalue of Gram Matrix
 
+def maximalDist(weight_matrix, weight_matrix_0):
+	weight_matrix_0 = weight_matrix_0[::2]
+	weight_matrix = weight_matrix[::2]
+
+	# Gram Matrix for other Hidden Layers
+	M = []
+	for weights0, weights1 in zip(weight_matrix_0[1:], weight_matrix[1:]):
+		part_1 = np.linalg.norm(weights1 - weights0)
+		M.append(part_1)
+
+	return M
+
 def calcLambdaMin(G):
 	eigen_values, eigen_vectors = eigs(G, k=1)
 	return eigen_values.real
