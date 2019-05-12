@@ -33,7 +33,7 @@ import os
 #    lambda_min = Smallest, real eigenvalue of Gram Matrix
 
 # Creates models and plots performance based on weight count and depth input lists
-def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_weights = False, exp_list=[1],num_trials=1):
+def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_weights = False, exp_list=[1]):
     # Setup network/training variables
     if load_data:
         x_train = pickle.load(open("x_data.p", "rb"))
@@ -82,51 +82,47 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
     #         print(e)
     #         raise
 
-    for i in range(0,num_trials):
-        start = time.time()
-        # Pass through each VCDim, construct the corresponding network, and train
-        for L in depths:
-            # Setup plot/counter
-            fig = plt.figure()
-            for i in range(0,len(VCdims)):
-                print("Training Model:: Depth = " + str(L) + " | VCDim = " + str(round(VCdims[i])) + " | Custom = " + str(
-                    custom_weights) + " | cL = " + str(cL))
-                print("Local current time :", time.asctime(time.localtime(time.time())))
-                print('Trial: '+str(i))
-                if custom_weights:
-                    VC = VCdims[i]
-                    loss_history , G_Matrix , W, hidden_nodes = buildCustomModel(x_train, y_train, L, VC, d, cL, x, epochs, 5)
-                    df = pd.DataFrame(loss_history.history)
-                    df['epoch'] = df.index
-                    df['VCdim'] = int(VC)
-                    df['depth'] = L
-                    df['param_count'] = W
-                    df['node_count'] = [hidden_nodes]*len(df)
-                    df['trail'] = i
-                    gram_list.append(G_Matrix['gram_matrix'])
-                    df['max_dist'] = float(max(G_Matrix['max_dist']))
-                    df['lambda_min'] = float(min(G_Matrix['lambda_min']))
-                    datasave = datasave.append(df)
+    start = time.time()
+    # Pass through each VCDim, construct the corresponding network, and train
+    for L in depths:
+        # Setup plot/counter
+        fig = plt.figure()
+        for i in range(0,len(VCdims)):
+            print("Training Model:: Depth = " + str(L) + " | VCDim = " + str(round(VCdims[i])) + " | Custom = " + str(
+                custom_weights) + " | cL = " + str(cL))
+            print("Local current time :", time.asctime(time.localtime(time.time())))
+            if custom_weights:
+                VC = VCdims[i]
+                loss_history , G_Matrix , W, hidden_nodes = buildCustomModel(x_train, y_train, L, VC, d, cL, x, epochs, 5)
+                df = pd.DataFrame(loss_history.history)
+                df['epoch'] = df.index
+                df['VCdim'] = int(VC)
+                df['depth'] = L
+                df['param_count'] = W
+                df['node_count'] = [hidden_nodes]*len(df)
+                gram_list.append(G_Matrix['gram_matrix'])
+                df['max_dist'] = float(max(G_Matrix['max_dist']))
+                df['lambda_min'] = float(min(G_Matrix['lambda_min']))
+                datasave = datasave.append(df)
 
-                else:
-                    VC = VCdims[i]
-                    loss_history, G_Matrix, W, hidden_nodes = buildSubModel(x_train, y_train, L, VC, d,  x, epochs)
-                    df = pd.DataFrame(loss_history.history)
-                    df['epoch'] = df.index
-                    df['VCdim'] = int(VC)
-                    df['depth'] = L
-                    df['param_count'] = W
-                    df['node_count'] = hidden_nodes
-                    df['trail'] = i
-                    gram_list.append(G_Matrix['gram_matrix'])
-                    df['max_dist'] = float(max(G_Matrix['max_dist']))
-                    df['lambda_min'] = float(min(G_Matrix['lambda_min']))
-                    datasave = datasave.append(df)
+            else:
+                VC = VCdims[i]
+                loss_history, G_Matrix, W, hidden_nodes = buildSubModel(x_train, y_train, L, VC, d,  x, epochs)
+                df = pd.DataFrame(loss_history.history)
+                df['epoch'] = df.index
+                df['VCdim'] = int(VC)
+                df['depth'] = L
+                df['param_count'] = W
+                df['node_count'] = hidden_nodes
+                gram_list.append(G_Matrix['gram_matrix'])
+                df['max_dist'] = float(max(G_Matrix['max_dist']))
+                df['lambda_min'] = float(min(G_Matrix['lambda_min']))
+                datasave = datasave.append(df)
 
-        pickle.dump(datasave, open(r'./data/result_data_'+str(round(time.time()))+".p", "wb"))
-        pickle.dump(gram_list, open(r'./data/gram_matrix_'+str(round(time.time()))+'.p', "wb"))
-        end = time.time()
-        print('Run Time = ' + str(end - start))
+    pickle.dump(datasave, open(r'./data/result_data_'+str(round(time.time()))+".p", "wb"))
+    pickle.dump(gram_list, open(r'./data/gram_matrix_'+str(round(time.time()))+'.p', "wb"))
+    end = time.time()
+    print('Run Time = ' + str(end - start))
     plt.show()
     # # Show phase sub-plot 
     # plt.show()
@@ -183,5 +179,5 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
     return
 
 if __name__ == '__main__':
-	main(n=1000, d=10, load_data = True,epochs=500000, depths=[2,3,4], cL = 1, custom_weights = False, exp_list=[.5,.75,1,1.25, 1.5],num_trials=1)
+	main(n=1000, d=10, load_data = True,epochs=20000, depths=[2,3,4], cL = 1, custom_weights = False, exp_list=[.5,1.5])
 
