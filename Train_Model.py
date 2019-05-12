@@ -179,5 +179,5 @@ def main(n=1000, d=10, load_data = True,epochs=5, depths=[2], cL = 1, custom_wei
     return
 
 if __name__ == '__main__':
-	main(n=1000, d=10, load_data = True,epochs=5, depths=[2,3], cL = 1, custom_weights = True, exp_list=[1,1.25,1.5])
+	main(n=1000, d=10, load_data = True,epochs=20000, depths=[2,3,4], cL = 1, custom_weights = False, exp_list=[.5,1.5])
 
